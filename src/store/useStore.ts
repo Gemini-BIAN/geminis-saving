@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Transaction, Category } from '../types';
-import { loadTransactions, saveTransactions, loadCategories, saveCategories } from '../utils/storage';
+import { loadTransactions, saveTransactions, loadCategories, saveCategories, runMigrationsAndEnsureDefaults } from '../utils/storage';
 import { defaultCategories } from '../utils/mockData';
 import { generateId } from '../utils/format';
 
@@ -28,19 +28,8 @@ export const useStore = create<StoreState>((set) => ({
   loading: true,
 
   initData: () => {
-    const savedTransactions = loadTransactions();
-    const savedCategories = loadCategories();
-
-    set({ transactions: savedTransactions });
-
-    if (savedCategories.length === 0) {
-      saveCategories(defaultCategories);
-      set({ categories: defaultCategories });
-    } else {
-      set({ categories: savedCategories });
-    }
-
-    set({ loading: false });
+    const { transactions, categories } = runMigrationsAndEnsureDefaults();
+    set({ transactions, categories, loading: false });
   },
 
   addTransaction: (transaction) => {

@@ -80,7 +80,38 @@ function runMigrations() {
   localStorage.setItem(SCHEMA_VERSION_KEY, String(CURRENT_SCHEMA_VERSION));
 }
 
-runMigrations();
+export const runMigrationsAndEnsureDefaults = (): { transactions: Transaction[]; categories: Category[] } => {
+  runMigrations();
+
+  // 无论是否刚迁移过，再次确保默认分类都齐全（防御性补全）
+  const savedCategories = safeJsonParse<Category>(localStorage.getItem(CATEGORIES_KEY), []);
+  if (savedCategories.length > 0) {
+    const existingIds = new Set(savedCategories.map((c) => c.id));
+    const existingNames = new Set(savedCategories.map((c) => `${c.type}:${c.name}`));
+    let changed = false;
+    const merged = [...savedCategories];
+    for (const def of defaultCategories) {
+      if (existingIds.has(def.id)) continue;
+      if (existingNames.has(`${def.type}:${def.name}`)) continue;
+      merged.push(def);
+      changed = true;
+    }
+    if (changed) {
+      localStorage.setItem(CATEGORIES_KEY, JSON.stringify(merged));
+    }
+    return {
+      transactions: safeJsonParse<Transaction>(localStorage.getItem(TRANSACTIONS_KEY), []),
+      categories: changed ? merged : savedCategories,
+    };
+  }
+
+  // 没有保存的分类，写入默认
+  localStorage.setItem(CATEGORIES_KEY, JSON.stringify(defaultCategories));
+  return {
+    transactions: safeJsonParse<Transaction>(localStorage.getItem(TRANSACTIONS_KEY), []),
+    categories: defaultCategories,
+  };
+};
 
 export const loadTransactions = (): Transaction[] => {
   const data = localStorage.getItem(TRANSACTIONS_KEY);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bookkeeping-v1';
+const CACHE_NAME = 'bookkeeping-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -30,7 +30,32 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  
+
+  // 对 HTML 和 JS/CSS 资源使用 network-first 策略，确保获取最新版本
+  const url = new URL(event.request.url);
+  const isHtml = event.request.mode === 'navigate' || (event.request.headers.get('accept') || '').includes('text/html');
+  const isAsset = url.pathname.startsWith('/assets/');
+
+  if (isHtml || isAsset) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response && response.status === 200) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
+        return response;
+      }).catch(() => {
+        return caches.match(event.request).then((cached) => {
+          return cached || caches.match('/index.html');
+        });
+      })
+    );
+    return;
+  }
+
+  // 其他资源使用 cache-first
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) {
