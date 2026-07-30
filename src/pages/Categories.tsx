@@ -29,7 +29,7 @@ const availableColors = [
 ];
 
 export const Categories = () => {
-  const { categories, addCategory, updateCategory, deleteCategory, initData } = useStore();
+  const { categories, addCategory, updateCategory, deleteCategory, initData, reorderCategories } = useStore();
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -115,6 +115,21 @@ export const Categories = () => {
     e.target.value = '';
   };
 
+  const moveCategory = (id: string, direction: 'up' | 'down') => {
+    const list = categories.filter((c) => c.type === activeTab);
+    const index = list.findIndex((c) => c.id === id);
+    if (index === -1) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= list.length) return;
+    const newList = [...list];
+    [newList[index], newList[targetIndex]] = [newList[targetIndex], newList[index]];
+    // 合并其他类型（保持原顺序）
+    const otherType = activeTab === 'expense' ? 'income' : 'expense';
+    const otherList = categories.filter((c) => c.type === otherType);
+    const merged = activeTab === 'expense' ? [...newList, ...otherList] : [...otherList, ...newList];
+    reorderCategories(merged.map((c) => c.id));
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -155,12 +170,16 @@ export const Categories = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-3">
-        {filteredCategories.map((category) => (
+        {filteredCategories.map((category, index) => (
           <CategoryCard
             key={category.id}
             category={category}
             onEdit={handleOpenModal}
             onDelete={deleteCategory}
+            onMoveUp={() => moveCategory(category.id, 'up')}
+            onMoveDown={() => moveCategory(category.id, 'down')}
+            canMoveUp={index > 0}
+            canMoveDown={index < filteredCategories.length - 1}
           />
         ))}
       </div>

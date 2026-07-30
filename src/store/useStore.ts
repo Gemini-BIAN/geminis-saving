@@ -17,6 +17,7 @@ interface StoreState {
   addCategory: (category: Omit<Category, 'id'>) => void;
   updateCategory: (id: string, updates: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
+  reorderCategories: (orderedIds: string[]) => void;
   setCurrentMonth: (month: string) => void;
 }
 
@@ -98,6 +99,22 @@ export const useStore = create<StoreState>((set) => ({
   deleteCategory: (id) => {
     set((state) => {
       const updatedCategories = state.categories.filter((c) => c.id !== id);
+      saveCategories(updatedCategories);
+      return { categories: updatedCategories };
+    });
+  },
+
+  reorderCategories: (orderedIds) => {
+    set((state) => {
+      const orderedMap = new Map(orderedIds.map((id, index) => [id, index]));
+      const updatedCategories = [...state.categories].sort((a, b) => {
+        const ai = orderedMap.get(a.id);
+        const bi = orderedMap.get(b.id);
+        if (ai === undefined && bi === undefined) return 0;
+        if (ai === undefined) return 1;
+        if (bi === undefined) return -1;
+        return ai - bi;
+      });
       saveCategories(updatedCategories);
       return { categories: updatedCategories };
     });

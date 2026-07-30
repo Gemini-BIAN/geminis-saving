@@ -6,7 +6,7 @@ const CATEGORIES_KEY = 'finance_categories';
 const BACKUP_TRANSACTIONS_KEY = 'finance_transactions_backup';
 const BACKUP_CATEGORIES_KEY = 'finance_categories_backup';
 const SCHEMA_VERSION_KEY = 'finance_schema_version';
-const CURRENT_SCHEMA_VERSION = 2;
+const CURRENT_SCHEMA_VERSION = 3;
 
 function safeJsonParse<T>(data: string | null, fallback: T[]): T[] {
   if (!data) return fallback;
@@ -43,13 +43,16 @@ function migrateTransactions(transactions: Transaction[]): Transaction[] {
 }
 
 function ensureNewCategories(existing: Category[]): Category[] {
-  // 确保所有默认分类都存在（id 匹配）
+  // 确保所有默认分类都存在
   const existingIds = new Set(existing.map((c) => c.id));
+  const existingNames = new Set(existing.map((c) => `${c.type}:${c.name}`));
   const merged = [...existing];
   for (const def of defaultCategories) {
-    if (!existingIds.has(def.id)) {
-      merged.push(def);
-    }
+    // 如果 ID 已存在但名称是新的（迁移到新分类时），跳过
+    if (existingIds.has(def.id)) continue;
+    // 避免重名（同一类型下）
+    if (existingNames.has(`${def.type}:${def.name}`)) continue;
+    merged.push(def);
   }
   return merged;
 }
