@@ -1,0 +1,19 @@
+{
+  "name": "记账管家",
+  "short_name": "记账管家",
+  "description": "简洁好用的个人记账工具，记录每一笔收支，优化消费习惯",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0D9488",
+  "orientation": "portrait",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
