@@ -44,7 +44,7 @@ export const Dashboard = () => {
     const options = [];
     const now = new Date();
     for (let i = 0; i < 12; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
       const value = date.toISOString().slice(0, 7);
       options.push({ value, label: formatMonth(value) });
     }
