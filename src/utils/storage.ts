@@ -1,9 +1,12 @@
 import { Transaction, Category } from '../types';
+import { defaultCategories } from './mockData';
 
 const TRANSACTIONS_KEY = 'finance_transactions';
 const CATEGORIES_KEY = 'finance_categories';
 const BACKUP_TRANSACTIONS_KEY = 'finance_transactions_backup';
 const BACKUP_CATEGORIES_KEY = 'finance_categories_backup';
+const SCHEMA_VERSION_KEY = 'finance_schema_version';
+const CURRENT_SCHEMA_VERSION = 2;
 
 function safeJsonParse<T>(data: string | null, fallback: T[]): T[] {
   if (!data) return fallback;
@@ -14,6 +17,67 @@ function safeJsonParse<T>(data: string | null, fallback: T[]): T[] {
     return fallback;
   }
 }
+
+// 旧分类 ID 到新分类 ID 的映射
+const CATEGORY_MIGRATIONS: Record<string, string> = {
+  'cat-1': 'cat-ordering', // 旧「餐饮」→ 新「Ordering」(外食)
+};
+
+function migrateCategories(categories: Category[]): Category[] {
+  return categories.map((c) => {
+    // 如果分类 ID 在迁移表中，替换为新 ID
+    if (CATEGORY_MIGRATIONS[c.id]) {
+      return { ...c, id: CATEGORY_MIGRATIONS[c.id] };
+    }
+    return c;
+  });
+}
+
+function migrateTransactions(transactions: Transaction[]): Transaction[] {
+  return transactions.map((t) => {
+    if (CATEGORY_MIGRATIONS[t.categoryId]) {
+      return { ...t, categoryId: CATEGORY_MIGRATIONS[t.categoryId] };
+    }
+    return t;
+  });
+}
+
+function ensureNewCategories(existing: Category[]): Category[] {
+  // 确保所有默认分类都存在（id 匹配）
+  const existingIds = new Set(existing.map((c) => c.id));
+  const merged = [...existing];
+  for (const def of defaultCategories) {
+    if (!existingIds.has(def.id)) {
+      merged.push(def);
+    }
+  }
+  return merged;
+}
+
+function runMigrations() {
+  const version = parseInt(localStorage.getItem(SCHEMA_VERSION_KEY) || '1', 10);
+
+  if (version >= CURRENT_SCHEMA_VERSION) return;
+
+  // 迁移分类
+  const savedCategories = safeJsonParse<Category>(localStorage.getItem(CATEGORIES_KEY), []);
+  if (savedCategories.length > 0) {
+    let migrated = migrateCategories(savedCategories);
+    migrated = ensureNewCategories(migrated);
+    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(migrated));
+  }
+
+  // 迁移交易
+  const savedTransactions = safeJsonParse<Transaction>(localStorage.getItem(TRANSACTIONS_KEY), []);
+  if (savedTransactions.length > 0) {
+    const migrated = migrateTransactions(savedTransactions);
+    localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(migrated));
+  }
+
+  localStorage.setItem(SCHEMA_VERSION_KEY, String(CURRENT_SCHEMA_VERSION));
+}
+
+runMigrations();
 
 export const loadTransactions = (): Transaction[] => {
   const data = localStorage.getItem(TRANSACTIONS_KEY);
@@ -69,7 +133,7 @@ export const exportData = (): string => {
     transactions: loadTransactions(),
     categories: loadCategories(),
     exportDate: new Date().toISOString(),
-    version: 1,
+    version: CURRENT_SCHEMA_VERSION,
   };
   return JSON.stringify(data, null, 2);
 };

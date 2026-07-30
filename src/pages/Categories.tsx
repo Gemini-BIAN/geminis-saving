@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react';
-import { Plus, X, Check, Download, Upload, UtensilsCrossed, Car, ShoppingBag, Gamepad2, Home, Heart, BookOpen, MoreHorizontal, Briefcase, Gift, TrendingUp, Laptop, Wallet } from 'lucide-react';
+import { Plus, X, Check, Download, Upload, UtensilsCrossed, Car, ShoppingBag, Gamepad2, Home, Heart, BookOpen, MoreHorizontal, Briefcase, Gift, TrendingUp, Laptop, Wallet, ChefHat } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { CategoryCard } from '../components/CategoryCard';
 import { exportData, importData } from '../utils/storage';
 import { Category } from '../types';
 
 const availableIcons = [
+  { name: 'ChefHat', icon: ChefHat },
   { name: 'UtensilsCrossed', icon: UtensilsCrossed },
   { name: 'Car', icon: Car },
   { name: 'ShoppingBag', icon: ShoppingBag },
