@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Plus, X, Check, UtensilsCrossed, Car, ShoppingBag, Gamepad2, Home, Heart, BookOpen, MoreHorizontal, Briefcase, Gift, TrendingUp, Laptop, Wallet } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, X, Check, Download, Upload, UtensilsCrossed, Car, ShoppingBag, Gamepad2, Home, Heart, BookOpen, MoreHorizontal, Briefcase, Gift, TrendingUp, Laptop, Wallet } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { CategoryCard } from '../components/CategoryCard';
+import { exportData, importData } from '../utils/storage';
 import { Category } from '../types';
 
 const availableIcons = [
@@ -27,10 +28,12 @@ const availableColors = [
 ];
 
 export const Categories = () => {
-  const { categories, addCategory, updateCategory, deleteCategory } = useStore();
+  const { categories, addCategory, updateCategory, deleteCategory, initData } = useStore();
   const [activeTab, setActiveTab] = useState<'expense' | 'income'>('expense');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [importMessage, setImportMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     icon: 'MoreHorizontal',
@@ -82,6 +85,33 @@ export const Categories = () => {
       addCategory(formData);
     }
     handleCloseModal();
+  };
+
+  const handleExport = () => {
+    const data = exportData();
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `记账管家_备份_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = importData(event.target?.result as string);
+      setImportMessage({ type: result.success ? 'success' : 'error', text: result.message });
+      if (result.success) {
+        initData();
+      }
+      setTimeout(() => setImportMessage(null), 3000);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   return (
@@ -146,6 +176,41 @@ export const Categories = () => {
           </button>
         </div>
       )}
+
+      <div className="bg-white rounded-2xl p-6 shadow-sm">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">数据备份</h2>
+        <p className="text-sm text-gray-500 mb-4">导出数据到文件以防丢失，或从备份文件恢复数据</p>
+        {importMessage && (
+          <div className={`mb-4 px-4 py-3 rounded-xl text-sm font-medium ${
+            importMessage.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'
+          }`}>
+            {importMessage.text}
+          </div>
+        )}
+        <div className="flex gap-3">
+          <button
+            onClick={handleExport}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors"
+          >
+            <Download className="w-5 h-5" />
+            导出数据
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <Upload className="w-5 h-5" />
+            导入数据
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleImport}
+            className="hidden"
+          />
+        </div>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
