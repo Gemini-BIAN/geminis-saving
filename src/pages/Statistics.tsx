@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Calendar, TrendingUp, PieChart, BarChart3, ArrowUp, ArrowDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Calendar, TrendingUp, PieChart, BarChart3, ArrowUp, ArrowDown, History } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, Legend } from 'recharts';
 import { formatCurrency, formatMonth } from '../utils/format';
@@ -128,6 +129,27 @@ export const Statistics = () => {
           </div>
         </div>
       </div>
+
+      <Link
+        to="/history"
+        className="block bg-white rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center">
+              <History className="w-6 h-6 text-primary-500" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800">历史记录</h2>
+              <p className="text-sm text-gray-500">查看全部收支明细，按日期分组</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-bold text-gray-800">{transactions.length}</p>
+            <p className="text-xs text-gray-400">总笔数</p>
+          </div>
+        </div>
+      </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl p-6 shadow-sm">

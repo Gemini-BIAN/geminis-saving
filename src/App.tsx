@@ -6,6 +6,7 @@ import { Dashboard } from './pages/Dashboard';
 import { AddTransaction } from './pages/AddTransaction';
 import { Statistics } from './pages/Statistics';
 import { Categories } from './pages/Categories';
+import { History } from './pages/History';
 
 export default function App() {
   const { initData, loading } = useStore();
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/add" element={<AddTransaction />} />
           <Route path="/stats" element={<Statistics />} />
+          <Route path="/history" element={<History />} />
           <Route path="/categories" element={<Categories />} />
         </Routes>
       </Layout>
