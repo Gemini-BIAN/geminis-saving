@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Check, Calendar, Circle } from 'lucide-react';
+import { ArrowLeft, Check, Calendar, Circle, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import * as Icons from 'lucide-react';
@@ -7,14 +7,23 @@ import { Category } from '../types';
 
 export const AddTransaction = () => {
   const navigate = useNavigate();
-  const { categories, addTransaction } = useStore();
-  
+  const { categories, transactions, addTransaction } = useStore();
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  // 找到最近一条交易的日期，作为补记参考
+  const lastTransactionDate = transactions.length
+    ? [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0].date
+    : null;
+
   const [type, setType] = useState<'income' | 'expense'>('expense');
   const [amount, setAmount] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [note, setNote] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(today);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isUsingLastDate = lastTransactionDate === date && date !== today;
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
@@ -151,9 +160,25 @@ export const AddTransaction = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              日期
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">
+                日期
+              </label>
+              {lastTransactionDate && (
+                <button
+                  type="button"
+                  onClick={() => setDate(lastTransactionDate)}
+                  className={`text-xs flex items-center gap-1 px-2 py-1 rounded-lg transition-colors ${
+                    isUsingLastDate
+                      ? 'bg-primary-100 text-primary-700 font-medium'
+                      : 'text-primary-600 hover:bg-primary-50'
+                  }`}
+                >
+                  <History className="w-3 h-3" />
+                  {isUsingLastDate ? '已使用上次日期' : `上次日期：${lastTransactionDate}`}
+                </button>
+              )}
+            </div>
             <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-4">
               <Calendar className="w-5 h-5 text-gray-400" />
               <input

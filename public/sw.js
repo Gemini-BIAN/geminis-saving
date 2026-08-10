@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bookkeeping-v2';
+const CACHE_NAME = 'bookkeeping-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

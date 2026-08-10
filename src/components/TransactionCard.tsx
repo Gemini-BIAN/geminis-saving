@@ -24,7 +24,8 @@ export const TransactionCard = ({ transaction, category, onDelete }: Transaction
         <div>
           <p className="font-medium text-gray-800">{category.name}</p>
           <p className="text-sm text-gray-400">
-            {transaction.note || formatDate(transaction.date)}
+            {formatDate(transaction.date)}
+            {transaction.note ? ` · ${transaction.note}` : ''}
           </p>
         </div>
       </div>
